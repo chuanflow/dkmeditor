@@ -2,12 +2,13 @@
 #include "ascii.h"
 #include "define.h"
 #include "terminal.h"
-#include <unistd.h>
 #include <fstream>
 #include <cstring>
-#include <cstdio>
 #include <ctime>
 #include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
 DkmEditor::DkmEditor() {
 	curx = 0;
 	cury = 0;
@@ -15,26 +16,25 @@ DkmEditor::DkmEditor() {
 	capacity = 0;
 	start_blank = 0;
 	end_block = 0;
-	echo_back = 0; // 默认会回显
 	mode = COMMAND_MODE;
 	filename = nullptr;
-	//setvbuf(stdin, onech, _IOFBF, 1); //满缓冲模式
-	//echo_back = TERMIANL::openEchoBack(echo_back);
+    interface = new Terminal();
 }
 int DkmEditor::ReadFile(char* filename) {
-	//std::ifstream readfile;
-	//readfile.open(filename, std::ios::in);
-	//char buf[10000];
-	//rows = new RowCoder[1000];
-	//int culnum = 0;
-	//while(! readfile.eof() ) {
-	//	readfile.getline(buf, 1000, '\n');	
-	//	rows[culnum++].InsertString(buf, strlen(buf));
-	//}
-	//readfile.close();
+	std::ifstream readfile;
+	readfile.open(filename, std::ios::in);
+	char buf[10000];
+	rows = new RowCoder[1000];
+	int culnum = 0;
+	while(! readfile.eof() ) {
+		readfile.getline(buf, 1000, '\n');	
+		rows[culnum++].InsertString(buf, strlen(buf));
+	}
+	readfile.close();
 	return 0;
 }
 int DkmEditor::Start() {
+    interface->OpenEchoBack();
 	while( true ){
 		switch ( mode ) 
 		{
@@ -51,20 +51,15 @@ int DkmEditor::Start() {
 				BlockMode();
 				break;
 			default:
-				return -1;
+                break;
 		}
 	}
+    interface->CloseEchoBack();
 	return 0;
 }
-int DkmEditor::GetPressKey(int fd) {
-	//int nread;
+int DkmEditor::GetPressKey(FILE* fd) {
 	char ch;
-	std::cin.get(ch);
-	//while((nread = read(fd, &ch, 1)) == 0);
-	//if(nread == -1)
-	//	exit(1);
-	printf("asdad");
-	sleep(2);
+    ch = getc(fd);
 	if( mode == COMMAND_MODE ) {
 		while(true) {
 			switch (ch) 
@@ -89,7 +84,7 @@ int DkmEditor::GetPressKey(int fd) {
 }
 int DkmEditor::CommandMode() {
 	int action;
-    action=GetPressKey(STDIN_FILENO);
+    action=GetPressKey(stdin);
 	switch (action) 
 	{
 		case INSERT_MODE:
@@ -126,13 +121,13 @@ int DkmEditor::BlockMode() {
 }
 int DkmEditor::GoToXy(int x, int y ) {
 	{
-		TERMIANL::goToXy(x,y);
+		interface->goToXy(x,y);
 	}
 	return 0;
 }
 int DkmEditor::MoveCursor(int action) {
 	{
-		TERMIANL::upDownRightLeft(action-1000+'A');
+		interface->upDownRightLeft(action-1000+'A');
 	}
 	return 0;
 }
