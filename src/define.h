@@ -5,6 +5,7 @@ const int COMMAND_MODE = 0;
 const int INSERT_MODE = 1;
 const int VISUAL_MODE = 2;
 const int BLOCK_MODE = 3;
+const int ENDALL_MODE = 4;
 /* 自定义键值 */
 const int ARROW_UP	 = 1000; //'A'
 const int ARROW_DOWN = 1001; //'B'

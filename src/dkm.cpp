@@ -1,7 +1,7 @@
-#include "dkm.h"
-#include "ascii.h"
 #include "define.h"
 #include "terminal.h"
+#include "ascii.h"
+#include "dkm.h"
 #include <fstream>
 #include <cstring>
 #include <ctime>
@@ -18,7 +18,7 @@ DkmEditor::DkmEditor() {
 	end_block = 0;
 	mode = COMMAND_MODE;
 	filename = nullptr;
-    interface = new Terminal();
+	interface = nullptr;
 }
 int DkmEditor::ReadFile(char* filename) {
 	std::ifstream readfile;
@@ -33,8 +33,11 @@ int DkmEditor::ReadFile(char* filename) {
 	readfile.close();
 	return 0;
 }
-int DkmEditor::Start() {
+void DkmEditor::Start() {
+	//连接界面
+    interface = new Terminal();
     interface->OpenEchoBack();
+	//进入编辑器模式
 	while( true ){
 		switch ( mode ) 
 		{
@@ -50,12 +53,21 @@ int DkmEditor::Start() {
 			case BLOCK_MODE:
 				BlockMode();
 				break;
+			case ENDALL_MODE:
+				goto endTheEditor;
 			default:
                 break;
 		}
+		interface->reDraw(rows);
 	}
+endTheEditor:
+	End();
+}
+void DkmEditor::End() {
     interface->CloseEchoBack();
-	return 0;
+	interface->goToXy(0, 0);
+	fprintf(stderr,"close the editor\n");
+	delete interface;
 }
 int DkmEditor::GetPressKey(FILE* fd) {
 	char ch;
@@ -100,35 +112,33 @@ int DkmEditor::CommandMode() {
 		case ARROW_DOWN:
 		case ARROW_LEFT:
 		case ARROW_RIGHT:
-		   MoveCursor(action);		   
+		   interface->upDownRightLeft(action);
 		   break;
 		case Ctrl_C:
-		   exit(0);
+		   mode = ENDALL_MODE;
 		   break;
 		default:
-		   return 0;
+		   break;
 	}
 	return 0;
 }
 int DkmEditor::InsertMode() {
+	int action;
+    action=GetPressKey(stdin);
+	switch (action)
+	{
+		case ESC:
+			mode = COMMAND_MODE;
+			break;
+		default:
+			rows[curx].InsertChar(action);
+	}
 	return 0;
 }
 int DkmEditor::VisualMode() {
 	return 0;
 }
 int DkmEditor::BlockMode() {
-	return 0;
-}
-int DkmEditor::GoToXy(int x, int y ) {
-	{
-		interface->goToXy(x,y);
-	}
-	return 0;
-}
-int DkmEditor::MoveCursor(int action) {
-	{
-		interface->upDownRightLeft(action-1000+'A');
-	}
 	return 0;
 }
 int DkmEditor::MemAlloc(size_t add_size) {

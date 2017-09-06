@@ -3,9 +3,14 @@
 #include <unistd.h>
 #include <termios.h>
 #include "terminal.h"
+#include "define.h"
 struct termios Terminal::orig_termios;
 Terminal::Terminal(){
     echo_back = 0;
+	curx = 0;
+	cury = 0;
+	goToXy(curx,cury);
+	clearScreen();
 }
 int Terminal::CloseEchoBack(){
 /* Don't even check the return value as it's too late. */
@@ -32,13 +37,42 @@ int Terminal::OpenEchoBack(){
 	fatal:
 		return -1;
 }
-void Terminal::reDraw(){
+void Terminal::reDraw(RowCoder *rows){
+	for(size_t i=0; i<rows->capacity; ++i) {
+		if(i == rows->start_blank) 
+			i = rows->end_block;
+		for(size_t j=0; j<rows[i].capacity; ++j) {
+			if(j == rows[i].start_blank)
+				j = rows[i].end_block;
+			printf("\033[%zu;%zuH%c",i,j,rows[i].row[j]);	
+		}
+		printf("\n");
+	}
 }
 void Terminal::goToXy(int x, int y) {
+	curx = x;
+	cury = y;
 	printf("\033[%d;%dH",x+1,y+1);
 }
-void Terminal::upDownRightLeft(char action) {
-	printf("\033[1%c",action);
+void Terminal::upDownRightLeft(int action) {
+	switch(action) {
+	case ARROW_UP:
+		cury--;
+		break;
+	case ARROW_RIGHT:
+		cury++;
+		break;
+	case ARROW_DOWN:
+		curx--;
+		break;
+	case ARROW_LEFT:
+		curx++;
+		break;
+	}
+	printf("\033[1%c",action-1000+'A');
+}
+void Terminal::clearScreen() {
+	printf("\033[2J");
 }
 void Terminal::printStatus(char *String) {
 }

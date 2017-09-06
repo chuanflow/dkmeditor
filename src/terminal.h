@@ -6,6 +6,7 @@ class Terminal:public Interface{
 public:
     static struct termios orig_termios;
     int echo_back; //回显
+	int curx,cury;
 public:
     Terminal();
 	//状态栏
@@ -15,10 +16,11 @@ public:
 	int OpenEchoBack();
 	int CloseEchoBack();
 	//重新渲染到屏幕
-	void reDraw();
-	//光标移动	
+	void reDraw(RowCoder* rows);
+	//光标移动,屏幕清屏
 	void goToXy(int x, int y); //\033[%d;%dH
-	void upDownRightLeft(char action); //\033[1(A|B|C|D)
+	void upDownRightLeft(int action); //\033[1(A|B|C|D)
+	void clearScreen();
     ~Terminal();
 };
 #endif

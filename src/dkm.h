@@ -18,7 +18,8 @@ private:
 public:
 	//init
 	DkmEditor();
-	int Start();
+	void Start();
+	void End();
 public:
 	//io
 	int ReadFile(char* filename);
@@ -34,6 +35,7 @@ public:
 public:
 	int GoToXy(int x,int y);
 	int MoveCursor(int action);
+	void ClearScreen();
 public:
 	//render
 	RowCoder* ReDraw(); //only return rows
