@@ -6,7 +6,6 @@ class Terminal:public Interface{
 public:
     static struct termios orig_termios;
     int echo_back; //回显
-	int curx,cury;
 public:
     Terminal();
 	//状态栏
@@ -21,6 +20,10 @@ public:
 	void goToXy(int x, int y); //\033[%d;%dH
 	void upDownRightLeft(int action); //\033[1(A|B|C|D)
 	void clearScreen();
+	int getCurx();
+	int getCury();
+	int setCurx(int x);
+	int setCury(int y);
     ~Terminal();
 };
 #endif

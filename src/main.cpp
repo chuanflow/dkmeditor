@@ -11,7 +11,6 @@ int main(int argc, char *argv[])
 		std::cerr<<"use: dkm <filename>"<<std::endl;	
 		exit(1);
 	}	
-	E.ReadFile(argv[1]);
-	E.Start();
+	E.Start(argv[1]);
 	return 0;
 }

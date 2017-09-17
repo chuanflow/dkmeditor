@@ -7,24 +7,28 @@ class DkmEditor {
 private:
 	RowCoder *rows; 
     Interface *interface;
-	size_t curx,cury; //光标位置
+	int curx,cury; //即将操作的位置
 	char *filename; //文件名
 	char statusline[100]; 
 private:
-	size_t real_size; // 已经使用行数
-	size_t capacity; //最大行数
-	size_t start_blank, end_block;
+	int real_size; // 已经使用行数
+	int capacity; //最大行数
+	int start_blank, end_block;
 	int mode;
 public:
 	//init
 	DkmEditor();
-	void Start();
+	void Start(char* filename);
 	void End();
 public:
-	//io
+	//io,action
 	int ReadFile(char* filename);
-	int MemAlloc(size_t add_size);
+	int MemAlloc(int add_size);
 	int GetPressKey(FILE* fd);
+	int PreChange();//操作内容之前做的工作
+	int AddLine();
+	int AddManyLine(int lines);
+	int AdjustBlankPos(int pos); //将rows的start_blank置为pos,调整空白区域位置;
 	int Save();
 public:
 	//mode
@@ -39,6 +43,6 @@ public:
 public:
 	//render
 	RowCoder* ReDraw(); //only return rows
-	int DelLine(size_t lines);
+	int DelLine(int lines);
 };
 #endif

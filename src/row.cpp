@@ -11,7 +11,7 @@ RowCoder::RowCoder() {
 	start_blank = 0;	
 	end_block = 0;
 }
-int RowCoder::MemAlloc(size_t add_size) {
+int RowCoder::MemAlloc(int add_size) {
 	if(row == nullptr)
 		row = (char*)malloc(add_size);
 	else {
@@ -26,20 +26,37 @@ int RowCoder::MemAlloc(size_t add_size) {
 		return 1;
 	}
 }
+int RowCoder::AdjustBlankPos(int pos) {
+	while(pos != start_blank){
+		if(pos > start_blank){
+			row[start_blank++] = row[end_block++];
+		}
+		else{
+			row[--end_block] = row[--start_blank];
+		}
+	}
+	if(end_block > real_size) 
+		end_block = real_size;
+	return 0;
+}
 int RowCoder::InsertChar(char ch) {
+	AdjustBlankPos(cury);
 	if(start_blank < end_block) {
 		row[start_blank ++] = ch;
 		real_size ++;
 	} else {
-		size_t add_size =  50;
+		int add_size =  50;
 		MemAlloc(add_size);
 		InsertChar(ch);
 	}	
 	return 0;
 }
 int RowCoder::InsertString(char *chs, int len) {
-	printf("%s\n", chs);
-		
+	if(start_blank < end_block) {
+		for(int i=0; i<len; ++i) {
+			InsertChar(chs[i]);
+		}
+	}
 	return 0;
 }
 int RowCoder::ReDraw() {

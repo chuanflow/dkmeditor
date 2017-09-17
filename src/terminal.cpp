@@ -9,8 +9,8 @@ Terminal::Terminal(){
     echo_back = 0;
 	curx = 0;
 	cury = 0;
-	goToXy(curx,cury);
-	clearScreen();
+	ws_cols = 80;
+	ws_rows = 80;
 }
 int Terminal::CloseEchoBack(){
 /* Don't even check the return value as it's too late. */
@@ -38,13 +38,13 @@ int Terminal::OpenEchoBack(){
 		return -1;
 }
 void Terminal::reDraw(RowCoder *rows){
-	for(size_t i=0; i<rows->capacity; ++i) {
+	for(int i=0; i<rows->real_size; ++i) {
 		if(i == rows->start_blank) 
 			i = rows->end_block;
-		for(size_t j=0; j<rows[i].capacity; ++j) {
+		for(int j=0; j<rows[i].real_size; ++j) {
 			if(j == rows[i].start_blank)
 				j = rows[i].end_block;
-			printf("\033[%zu;%zuH%c",i,j,rows[i].row[j]);	
+			printf("%c",rows[i].row[j]);	
 		}
 		printf("\n");
 	}
@@ -53,6 +53,20 @@ void Terminal::goToXy(int x, int y) {
 	curx = x;
 	cury = y;
 	printf("\033[%d;%dH",x+1,y+1);
+}
+int Terminal::getCurx(){
+	return curx;
+}
+int Terminal::getCury(){
+	return cury;
+}
+int Terminal::setCurx(int x) {
+	curx = x;
+	return 0;
+}
+int Terminal::setCury(int y){
+	cury = y;
+	return 0;
 }
 void Terminal::upDownRightLeft(int action) {
 	switch(action) {
