@@ -9,21 +9,23 @@ public:
 public:
     Terminal();
 	//状态栏
-	void printStatus(char *String);
-	void clearStatus();
+	void PrintStatus(char *msg);
+	void ClearStatus();
 	//开启关闭回显
 	int OpenEchoBack();
 	int CloseEchoBack();
 	//重新渲染到屏幕
-	void reDraw(RowCoder* rows);
+	void ReDraw(int s,int e, char* rows[]);
 	//光标移动,屏幕清屏
-	void goToXy(int x, int y); //\033[%d;%dH
-	void upDownRightLeft(int action); //\033[1(A|B|C|D)
-	void clearScreen();
-	int getCurx();
-	int getCury();
-	int setCurx(int x);
-	int setCury(int y);
+	void GoToXy(int x, int y); //\033[%d;%dH
+	void UpDownRightLeft(int action); //\033[1(A|B|C|D)
+	void ClearScreen();
+	int GetCurx();
+	int GetCury();
+	int SetCurx(int x);
+	int SetCury(int y);
+	int GetWindowSize(int ifd, int ofd, int *rows, int *cols);
+	int GetCursorPosition(int ifd, int ofd, int *rows, int *cols);
     ~Terminal();
 };
 #endif
