@@ -32,6 +32,7 @@ DkmEditor::DkmEditor() {
 void DkmEditor::Start(char* filename) {
 	//读取文件
 	//ReadFile(filename);
+	this->filename = filename;
 	//连接界面
     interface = new Terminal();
 	//interface->reDraw(rows);
@@ -59,19 +60,19 @@ void DkmEditor::Start(char* filename) {
 		//	default:
         //        break;
 		}
+		fprintf(stderr,"操作的位置:%d:%d",curx,cury);
 	}
 endTheEditor:
 	End();
 }
 void DkmEditor::End() {
     interface->CloseEchoBack();
+	Save();
 	fprintf(stderr,"close the editor\n");
 	delete interface;
 }
 int DkmEditor::PreChange() {
-//先以界面的坐标为基准,转换为标准的dkmeditor坐标,(从0开始)
-	curx = interface->GetCurx();
-	cury = interface->GetCury();
+	//传递操作的位置
 	col.nowPos = curx;
 	col.content[col.nowPos].nowPos = cury;
 	return 0;
@@ -80,17 +81,58 @@ int DkmEditor::GetPressKey(FILE* fd) {
 	char ch;
     while((ch = getc(fd)) == -1);
 	if( mode == COMMAND_MODE ) {
-		while(true) {
-			switch (ch) 
+		switch (ch) 
+		{
+			case 'h': 
 			{
-				case 'h': return ARROW_LEFT;	
-				case 'j': return ARROW_UP;
-				case 'k': return ARROW_DOWN;
-				case 'l': return ARROW_RIGHT;
-				case 'i': return INSERT_MODE;
-				default:
-					return ch;
+				if(cury > 0) 
+				{
+					--cury;
+					if(cury == col.content[curx].endBlock-1){
+						cury=col.content[curx].startBlank-1;
+					}
+					return ARROW_LEFT;
+				}	
+				break;
 			}
+			case 'j':
+			{
+				if(curx < col.capacity-1)
+				{
+					++curx;
+					if(curx == col.startBlank){
+						curx = col.endBlock;
+					}
+					return ARROW_UP;
+				}
+				break;
+			}
+			case 'k': 
+			{
+				if(curx > 0)
+				{
+					--curx;
+					if(curx == col.endBlock-1){
+						curx = col.startBlank-1;
+					}
+					return ARROW_DOWN;
+				}
+				break;
+			}
+			case 'l': 
+			{
+				if(cury < col.content[curx].capacity) 
+				{
+					++cury;
+					if(cury == col.content[curx].startBlank)
+						cury=col.content[curx].endBlock;
+					return ARROW_RIGHT;
+				}
+				break;
+			}
+			case 'i': return INSERT_MODE;
+			default:
+				return ch;
 		}
 	}
 	else{
@@ -101,11 +143,11 @@ int DkmEditor::GetPressKey(FILE* fd) {
 				return ch;
 		}
 	}
-	return 0;
+	return -1;
 }
 int DkmEditor::CommandMode() {
 	int action;
-    action=GetPressKey(stdin);
+    while((action=GetPressKey(stdin))==-1);
 	fprintf(stderr,"%d\n",action);
 	switch (action) 
 	{
@@ -142,17 +184,28 @@ int DkmEditor::InsertMode() {
 		case ESC:
 			mode = COMMAND_MODE;
 			break;
+		case '\r':
+			cury=0;
 		case '\n':
 			//col.InsertContent(*new Row);
+			curx++;
+			break;
+		case 127://backspace
+			if(cury > 0){
+				col.content[curx].DeleteContent();
+				cury--;
+			}
+			fprintf(stderr,"backspace\n");
 			break;
 		default:
 			//在curx行插入一个字符
 			if(curx < col.capacity){
 				col.content[curx].InsertContent(action);
-				ReDraw(0, col.size);
+				cury++;
 			}
 			break;
 	}
+	ReDraw(0, col.size);
 	fprintf(stderr,"InsertMode Ended\n");
 	return 0;
 }
@@ -195,6 +248,8 @@ int DkmEditor::ReDraw(int s,int e){
 	}
 	//显示到屏幕
 	interface->ReDraw(s, e, array);
+	//恢复光标
+	interface->GoToXy(curx,cury);
 	//回收内存
 	for(int i=0; i<col.size; ++i){
 		delete[] array[i];
@@ -203,17 +258,25 @@ int DkmEditor::ReDraw(int s,int e){
 	delete[] array;
 	return 0;
 }
-//int DkmEditor::Save() {
-//	std::ofstream writefile;
-//	writefile.open(filename, std::ios::out);
-//	for(int rownum=0; rownum < capacity; ++rownum) {
-//		//if(rownum == start_blank)
-//		//	rownum = end_block;
-//		//int colnum_size = rows[rownum].capacity;
-//		////char *buf = rows[rownum].MemAlloc(rows[rownum].real_size);
-//		//writefile.write(buf, real_size);
-//	}
-//	writefile.close();
-//	return 0;
-//}
+int DkmEditor::Save() {
+	FILE *fp = NULL;
+	if((fp=fopen(filename,"w")) != NULL){
+		char **array = new char*[col.size];
+		ToArray(0, col.size, array);
+		for(int i=0; i<col.size; ++i){
+			fprintf(fp,"%s\n",array[i]);
+		}
+		fclose(fp);
+		fprintf(stderr,"save file success\n");	
+		for(int i=0; i<col.size; ++i){
+			delete[] array[i];
+			array[i] = nullptr;
+		}	
+		delete[] array;
+	}
+	else{
+		fprintf(stderr,"save file failed\n");	
+	}
+	return 0;
+}
 

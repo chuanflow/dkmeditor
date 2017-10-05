@@ -35,10 +35,10 @@ public:
 	int AdjustBlank(){
 		/*
 		 |*********|      |*********|
-		 c    pos  s      e     size,cap 
+		 c    pos  s      e        cap 
 		 变换为:
 		 |*****|      |*************|
-		 c  pos,s     e			size,cap 
+		 c  pos,s     e			   cap 
 		 */
 		while(nowPos < startBlank){
 			content[--endBlock] = content[--startBlank];
@@ -70,19 +70,19 @@ public:
 			MemAlloc(reSize);
 			/*
 			|*********|*******|      |
-			c        s,e     size    cap
+			c        s,e            cap
 			变换为:
 			|*********|      |*******|
-			c        s       e     size,cap
+			c        s       e      cap
 			 */
 
 			int endPos1 = capacity;
 			int endPos2 = size;
-			while(endPos2 != startBlank){
+			while(endPos2 != startBlank-1){
 				content[--endPos1] = content[--endPos2];
 			}
+			startBlank--;
 			endBlock = startBlank+(capacity - size);
-			size = capacity;
 			fprintf(stderr,"instering\n");
 			InsertContent(con);
 			fprintf(stderr,"instered\n");

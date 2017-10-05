@@ -1,101 +1,15 @@
-class RowCoder {
-public:
-	int capacity; //行的容量
-	int real_size; //行的实际长度
-	//end_block不可能超过real_size
-	//当end_block == capacity时,表示只有左实体段
-	int start_blank, end_block; //空白区域，左闭右开,指向即将编辑的位置 and 空白区域的下一个位置
-	char *row; //原始字符
-	int curx,cury; //
-public:
-	//init
-	RowCoder();
-	//memory
-	int MemAlloc(int size);
-	//action
-	int InsertChar(char ch);
-	int InsertString(char *chs, int len);
-	int DeleteChar();
-	int DeleteString(int len);
-	int AdjustBlankPos(int pos); //将row的start_blank置为pos,调整空白区域位置;
-	//render
-	int ReDraw(); //渲染单行
-	//io
-	int Save();
-	~RowCoder();
-};
-class Interface {
-private:
-protected:
-    int ws_cols,ws_rows; 
-	int curx,cury;
-public:
-    Interface();
-    virtual int OpenEchoBack()=0;
-    virtual int CloseEchoBack()=0;
-	virtual void printStatus(char *String)=0;
-	virtual void clearStatus()=0;
-	virtual void reDraw(RowCoder* rows)=0;
-	virtual void goToXy(int x, int y)=0; 
-	virtual void upDownRightLeft(int action)=0; 
-	virtual void clearScreen()=0;
-	virtual int getCurx()=0;
-	virtual int getCury()=0;
-	virtual int setCurx(int x)=0;
-	virtual int setCury(int y)=0;
-    virtual ~Interface();
-};
-class DkmEditor {
-private:
-	RowCoder *rows; 
-    Interface *interface;
-	int curx,cury; //即将操作的位置
-	char *filename; //文件名
-	char statusline[100]; 
-private:
-	int real_size; // 已经使用行数
-	int capacity; //最大行数
-	int start_blank, end_block;
-	int mode;
-public:
-	//init
-	DkmEditor();
-	void Start(char* filename);
-	void End();
-public:
-	//io,action
-	int ReadFile(char* filename);
-	int MemAlloc(int add_size);
-	int GetPressKey(FILE* fd);
-	int PreChange();//操作内容之前做的工作
-	int AddLine();
-	int AddManyLine(int lines);
-	int AdjustBlankPos(int pos); //将rows的start_blank置为pos,调整空白区域位置;
-	int Save();
-public:
-	//mode
-	int CommandMode();
-	int InsertMode();
-	int VisualMode();
-	int BlockMode();
-public:
-	int GoToXy(int x,int y);
-	int MoveCursor(int action);
-	void ClearScreen();
-public:
-	//render
-	RowCoder* ReDraw(); //only return rows
-	int DelLine(int lines);
-};
 # interface
 提供界面控制
 接口:
 光标移动
 清屏
-在相应位置显示一个字符
-渲染，整页内容
+渲染
+得到光标坐标
+得到窗口大小
 # dkm
 总体控制流程
+命令模式
+插入模式
 # col
 行控制
 接口:
@@ -107,4 +21,3 @@ public:
 接收一个字符,存到相应的位置
 从相应位置删除一个字符
 
-先假设屏幕大小是87*87

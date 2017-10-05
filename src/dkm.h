@@ -26,7 +26,7 @@ public:
 	//int ReadFile(char* filename);
 	int GetPressKey(FILE* fd);
 	int PreChange();//操作内容之前做的工作
-	//int Save();
+	int Save();
 	int ToArray(int s, int e, char *array[]);
 public:
 	//mode
