@@ -8,7 +8,8 @@ class DkmEditor {
 private:
 	Col col;
     Interface *interface;
-	int curx,cury; //文本中操作的位置
+	int curx,cury; //光标活动的范围
+	int charSum;
 	char *filename; //文件名
 	char statusline[100]; 
 private:
@@ -27,7 +28,7 @@ public:
 	int GetPressKey(FILE* fd);
 	int PreChange();//操作内容之前做的工作
 	int Save();
-	int ToArray(int s, int e, char *array[]);
+	int ToArray(int s, int e, char *array);
 public:
 	//mode
 	int CommandMode();

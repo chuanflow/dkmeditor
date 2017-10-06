@@ -12,6 +12,7 @@
 DkmEditor::DkmEditor() {
 	curx = 0;
 	cury = 0;
+	charSum = 0;
 	mode = COMMAND_MODE;
 	filename = nullptr;
 	interface = nullptr;
@@ -60,7 +61,6 @@ void DkmEditor::Start(char* filename) {
 		//	default:
         //        break;
 		}
-		fprintf(stderr,"操作的位置:%d:%d",curx,cury);
 	}
 endTheEditor:
 	End();
@@ -74,7 +74,15 @@ void DkmEditor::End() {
 int DkmEditor::PreChange() {
 	//传递操作的位置
 	col.nowPos = curx;
+	if(curx > col.startBlank){
+		col.nowPos = curx+col.endBlock-col.startBlank;
+	}
 	col.content[col.nowPos].nowPos = cury;
+	if(cury > col.content[col.nowPos].startBlank){
+		fprintf(stderr,"%d start=%d",cury,col.content[col.nowPos].startBlank);
+		col.content[col.nowPos].nowPos = cury+col.content[col.nowPos].endBlock - \
+					 col.content[col.nowPos].startBlank;
+	}
 	return 0;
 }
 int DkmEditor::GetPressKey(FILE* fd) {
@@ -83,49 +91,43 @@ int DkmEditor::GetPressKey(FILE* fd) {
 	if( mode == COMMAND_MODE ) {
 		switch (ch) 
 		{
+
+			case 66:
 			case 'h': 
 			{
 				if(cury > 0) 
 				{
 					--cury;
-					if(cury == col.content[curx].endBlock-1){
-						cury=col.content[curx].startBlank-1;
-					}
 					return ARROW_LEFT;
 				}	
 				break;
 			}
+			case 68:
 			case 'j':
 			{
-				if(curx < col.capacity-1)
+				if(curx+1 <= col.size)
 				{
 					++curx;
-					if(curx == col.startBlank){
-						curx = col.endBlock;
-					}
-					return ARROW_UP;
+					return ARROW_DOWN;
 				}
 				break;
 			}
+			case 65:
 			case 'k': 
 			{
 				if(curx > 0)
 				{
 					--curx;
-					if(curx == col.endBlock-1){
-						curx = col.startBlank-1;
-					}
-					return ARROW_DOWN;
+					return ARROW_UP;
 				}
 				break;
 			}
+			case 67:
 			case 'l': 
 			{
-				if(cury < col.content[curx].capacity) 
+				if(cury < col.content[col.nowPos].size) 
 				{
 					++cury;
-					if(cury == col.content[curx].startBlank)
-						cury=col.content[curx].endBlock;
 					return ARROW_RIGHT;
 				}
 				break;
@@ -136,7 +138,7 @@ int DkmEditor::GetPressKey(FILE* fd) {
 		}
 	}
 	else{
-		fprintf(stderr,"%c\n",ch);
+		fprintf(stderr,"press:%c\n",ch);
 		switch (ch) 
 		{
 			default:
@@ -177,8 +179,13 @@ int DkmEditor::CommandMode() {
 }
 int DkmEditor::InsertMode() {
 	PreChange();
+	fprintf(stderr,"x=%d,y=%d\n",curx,cury);
+	fprintf(stderr,"xpos=%d,ypos=%d\n",col.nowPos,col.content[col.nowPos].nowPos);
 	int action;
-    action=GetPressKey(stdin);
+    while((action=GetPressKey(stdin))==-1);
+	Row row;
+	//row.size=0;
+	//row.startBlank=0;
 	switch (action)
 	{
 		case ESC:
@@ -186,24 +193,29 @@ int DkmEditor::InsertMode() {
 			break;
 		case '\r':
 			cury=0;
-		case '\n':
-			//col.InsertContent(*new Row);
 			curx++;
+			PreChange();
+			col.InsertContent(row);
+			fprintf(stderr,"enterr\n");
+			break;
+		case '\n':
+			fprintf(stderr,"entern\n");
 			break;
 		case 127://backspace
+			//删除
 			if(cury > 0){
-				col.content[curx].DeleteContent();
+				col.content[col.nowPos].DeleteContent();
 				cury--;
+				charSum--;
 			}
-			fprintf(stderr,"backspace\n");
 			break;
 		default:
 			//在curx行插入一个字符
-			if(curx < col.capacity){
-				col.content[curx].InsertContent(action);
+			if(curx <= col.size){
+				col.content[col.nowPos].InsertContent(action);
 				cury++;
+				charSum++;
 			}
-			break;
 	}
 	ReDraw(0, col.size);
 	fprintf(stderr,"InsertMode Ended\n");
@@ -216,62 +228,61 @@ int DkmEditor::BlockMode() {
 	return 0;
 }
 //提取[s,e)区间行的字符到二维字符数组,'\0'结束
-int DkmEditor::ToArray(int s, int e, char* array[]){
-	int p=0,q=0;
+int DkmEditor::ToArray(int s, int e, char* array){
+	int p=0;
+	fprintf(stderr,"Toarray:s=%d,e=%d\n",s,e);
 	for(int i=s; i<e && i<col.capacity; ++i){
 		if(i == col.startBlank){
 			i = col.endBlock;
-			if(i==e || i == col.capacity)
+			if(i>=e || i == col.capacity)
 				continue;
 		}
 		Row &row = col.content[i];
-		array[p] = new char[row.size];
 		for(int j=0; j<row.capacity; ++j){
 			if(j == row.startBlank){
 				j=row.endBlock;
-				if(j == row.capacity)
-					continue;
 			}
-			array[p][q++]=row.content[j];	
+			if(j == row.capacity-1){
+				array[p++]='\r';	
+				array[p++]='\n';
+				fprintf(stderr,"\r\n");
+			}
+			else{
+				fprintf(stderr, "%c",row.content[j]);
+				array[p++]=row.content[j];	
+			}
 		}
-		array[p++][q]='\0';
-		q=0;
 	}	
+	array[p]='\0';
 	return 0;
 }
 //重新渲染第s行到第e行的字符,[s,e)
 int DkmEditor::ReDraw(int s,int e){
-	char **array = new char*[col.size];
+	fprintf(stderr,"redrawing\n");
+	char *array = new char[1000000];
 	ToArray(s, e, array);
-	for(int i=0; i<e-s; ++i){
-		fprintf(stderr,"%s",array[i]);
-	}
+	//fprintf(stderr,"%s\n",array);
 	//显示到屏幕
 	interface->ReDraw(s, e, array);
 	//恢复光标
 	interface->GoToXy(curx,cury);
 	//回收内存
-	for(int i=0; i<col.size; ++i){
-		delete[] array[i];
-		array[i] = nullptr;
-	}	
 	delete[] array;
+	fprintf(stderr,"redrawed\n");
 	return 0;
 }
 int DkmEditor::Save() {
 	FILE *fp = NULL;
 	if((fp=fopen(filename,"w")) != NULL){
-		char **array = new char*[col.size];
+		char *array = new char[col.size+charSum];
 		ToArray(0, col.size, array);
-		for(int i=0; i<col.size; ++i){
-			fprintf(fp,"%s\n",array[i]);
+		for(int i=0; array[i];++i){
+			if(array[i]!='\r'){
+				fprintf(fp,"%c",array[i]);
+			}
 		}
 		fclose(fp);
 		fprintf(stderr,"save file success\n");	
-		for(int i=0; i<col.size; ++i){
-			delete[] array[i];
-			array[i] = nullptr;
-		}	
 		delete[] array;
 	}
 	else{

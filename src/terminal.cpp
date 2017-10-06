@@ -41,16 +41,9 @@ int Terminal::OpenEchoBack(){
 		return -1;
 }
 //从屏幕上的[s,e)输出rows的内容
-void Terminal::ReDraw(int s, int e, char *rows[]){
+void Terminal::ReDraw(int s, int e, char *rows){
 	ClearScreen();
-	for(int i=s; i<e; ++i){
-		if(rows[i][0]!='\0'){
-			for(int j=0; rows[i][j]; ++j){
-				printf("%c",rows[i][j]);
-			}
-		}	
-		fprintf(stderr,"%s",rows[i]);
-	}
+	printf("%s",rows);
 }
 void Terminal::GoToXy(int x, int y) {
 	curx = x;

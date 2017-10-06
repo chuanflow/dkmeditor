@@ -15,7 +15,7 @@ public:
 	int OpenEchoBack();
 	int CloseEchoBack();
 	//重新渲染到屏幕
-	void ReDraw(int s,int e, char* rows[]);
+	void ReDraw(int s,int e, char* rows);
 	//光标移动,屏幕清屏
 	void GoToXy(int x, int y); //\033[%d;%dH
 	void UpDownRightLeft(int action); //\033[1(A|B|C|D)

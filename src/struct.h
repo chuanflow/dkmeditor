@@ -26,9 +26,9 @@ public:
 		 */
 		content = nullptr;
 		size = 1;
-		capacity = 1;
-		startBlank = 0;	
-		endBlock = 0;
+		capacity = 80;
+		startBlank = 1;	
+		endBlock = 80;
 		content = new Content[capacity];
 	}
 	//调整空白位置到nowPos位置
@@ -49,6 +49,7 @@ public:
 	}
 	//memory
 	int MemAlloc(int reSize){
+		fprintf(stderr,"Memallocing\n");
 		Content *re = new Content[reSize];
 		for(int i=0; i<capacity; ++i){
 			re[i] = content[i];
@@ -57,16 +58,19 @@ public:
 		content = re;
 		re = nullptr;
 		capacity = reSize;
+		fprintf(stderr,"Memalloced\n");
 	}
 	//action
 	int InsertContent(Content con){
 		if(startBlank < endBlock) {
+			fprintf(stderr,"installing\n");
 			AdjustBlank();
 			content[startBlank] = con;
 			startBlank ++;
 			size ++;
+			fprintf(stderr,"installed\n");
 		} else {
-			int reSize =  capacity + 50;
+			int reSize =  capacity + 1000;
 			MemAlloc(reSize);
 			/*
 			|*********|*******|      |
@@ -75,18 +79,16 @@ public:
 			|*********|      |*******|
 			c        s       e      cap
 			 */
-
 			int endPos1 = capacity;
 			int endPos2 = size;
-			while(endPos2 != startBlank-1){
+			while(endPos2 != startBlank){
 				content[--endPos1] = content[--endPos2];
 			}
-			startBlank--;
-			endBlock = startBlank+(capacity - size);
-			fprintf(stderr,"instering\n");
+			startBlank = endPos2;
+			endBlock = endPos1;
 			InsertContent(con);
-			fprintf(stderr,"instered\n");
 		}	
+		fprintf(stderr,"install s=%d e=%d size=%d c=%d\n",startBlank,endBlock,size,capacity);
 		return 0;
 	}
 	int DeleteContent(){
@@ -95,7 +97,8 @@ public:
 		}	
 	};
 	~Struct(){
-		delete[] content;
+		fprintf(stderr,"~struct\n");
+		//delete[] content;
 		content = nullptr;
 	};
 };

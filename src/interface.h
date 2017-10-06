@@ -12,7 +12,7 @@ public:
     virtual int CloseEchoBack()=0;
 	virtual void PrintStatus(char *String)=0;
 	virtual void ClearStatus()=0;
-	virtual void ReDraw(int s, int e, char* rows[])=0;//80*80
+	virtual void ReDraw(int s, int e, char* rows)=0;//80*80
 	virtual void GoToXy(int x, int y)=0; 
 	virtual void UpDownRightLeft(int action)=0; 
 	virtual void ClearScreen()=0;
