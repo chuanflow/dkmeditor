@@ -1,1 +1,2 @@
-g++ src/main.cpp src/dkm.cpp src/row.cpp src/interface.cpp src/terminal.cpp   -std=c++11 -o dkm
+g++ --std=c++11 dkm.cpp main.cpp row.cpp utils.cpp terminal.cpp interface.cpp col.cpp -o dkm
+
