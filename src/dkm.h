@@ -1,29 +1,34 @@
 #ifndef __DKM_H__
 #define __DKM_H__
 #include "row.h"
+#include "col.h"
+#include "interface.h"
+#include <cstdio>
 class DkmEditor {
 private:
-	RowCoder *rows; 
-	size_t curx,cury; //光标位置
+	Col col;
+    Interface *interface;
+	int curx,cury; //光标活动的范围
+	int charSum;
 	char *filename; //文件名
-	char onech[20]; //满缓冲模式缓冲区
 	char statusline[100]; 
 private:
-	size_t real_size; // 已经使用行数
-	size_t capacity; //最大行数
-	size_t start_blank, end_block;
+	//int real_size; // 已经使用行数
+	//int capacity; //最大行数
+	//int start_blank, end_block;
 	int mode;
-	int echo_back;
 public:
 	//init
 	DkmEditor();
-	int Start();
+	void Start(char* filename);
+	void End();
 public:
-	//io
-	int ReadFile(char* filename);
-	int MemAlloc(size_t add_size);
-	int GetPressKey(int fd);
+	//io,action
+	//int ReadFile(char* filename);
+	int GetPressKey(FILE* fd);
+	int PreChange();//操作内容之前做的工作
 	int Save();
+	int ToArray(int s, int e, char *array);
 public:
 	//mode
 	int CommandMode();
@@ -31,12 +36,11 @@ public:
 	int VisualMode();
 	int BlockMode();
 public:
-	//cursor action
 	int GoToXy(int x,int y);
 	int MoveCursor(int action);
+	void ClearScreen();
+	int ReDraw(int s, int e);
 public:
-	//render
-	RowCoder* ReDraw(); //only return rows
-	int DelLine(size_t lines);
+	//int DelLine(int lines);
 };
 #endif
